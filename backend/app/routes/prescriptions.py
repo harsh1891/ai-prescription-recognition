@@ -30,6 +30,14 @@ async def process_prescription(
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
 
 
+@router.get("/providers/gemini/models")
+async def list_gemini_models() -> list[dict]:
+    try:
+        return await service.vision.list_gemini_models()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+
 @router.get("", response_model=list[PrescriptionListItem])
 async def list_prescriptions(
     search: str | None = None,

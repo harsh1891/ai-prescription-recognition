@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     gemini_api_key: str | None = None
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o-mini"
-    gemini_model: str = "gemini-1.5-flash"
+    gemini_model: str = "gemini-2.5-flash"
     ai_fallback_to_mock: bool = False
     medicine_dataset_path: str = "../datasets/medicines.csv"
     interaction_dataset_path: str = "../datasets/drug_interactions.csv"

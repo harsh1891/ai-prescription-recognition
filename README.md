@@ -77,10 +77,11 @@ Set `VISION_PROVIDER=mock` for local development. Use `gemini` or `openai` when 
 ```env
 VISION_PROVIDER=mock
 GEMINI_API_KEY=
+GEMINI_MODEL=gemini-2.5-flash
 OPENAI_API_KEY=
 ```
 
-The mock provider returns deterministic data for demos and tests. The real providers are implemented behind one interface in `backend/app/ai/vision.py`.
+The mock provider returns deterministic data for demos and tests. For real image extraction, set `VISION_PROVIDER=gemini`, add your Gemini key, and keep `GEMINI_MODEL=gemini-2.5-flash`. The real providers are implemented behind one interface in `backend/app/ai/vision.py`.
 
 ## GitHub
 

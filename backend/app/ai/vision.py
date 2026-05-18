@@ -30,6 +30,24 @@ class VisionExtraction:
 
 
 class VisionClient:
+    async def list_gemini_models(self) -> list[dict[str, Any]]:
+        settings = get_settings()
+        if not settings.gemini_api_key:
+            raise RuntimeError("GEMINI_API_KEY is required to list Gemini models")
+        url = f"https://generativelanguage.googleapis.com/v1beta/models?key={settings.gemini_api_key}"
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.get(url)
+            self._raise_for_status(response)
+        models = response.json().get("models", [])
+        return [
+            {
+                "name": model.get("name"),
+                "display_name": model.get("displayName"),
+                "supported_generation_methods": model.get("supportedGenerationMethods", []),
+            }
+            for model in models
+        ]
+
     async def extract(self, content: bytes, mime_type: str, language_hint: str | None = None) -> VisionExtraction:
         settings = get_settings()
         provider = settings.vision_provider.lower()
