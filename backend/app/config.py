@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-1.5-flash"
     medicine_dataset_path: str = "../datasets/medicines.csv"
     interaction_dataset_path: str = "../datasets/drug_interactions.csv"
-    allowed_origins: str = "http://localhost:3000"
+    allowed_origins: str = "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
@@ -27,4 +27,3 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-
