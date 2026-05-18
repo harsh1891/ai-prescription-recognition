@@ -1,0 +1,17 @@
+node_modules/
+.next/
+out/
+dist/
+build/
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+.env.local
+.pytest_cache/
+.coverage
+uploads/
+backend/uploads/
+*.db
+

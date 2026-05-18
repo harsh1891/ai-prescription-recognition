@@ -1,0 +1,5 @@
+drug_a,drug_b,severity,message
+Azithromycin 500,Atorvastatin 10,moderate,May increase risk of muscle toxicity. Review patient risk factors.
+Amoxicillin 500,Metformin 500,low,Monitor glucose control during infection and antibiotic therapy.
+Pantoprazole 40,Cetirizine 10,low,No major interaction expected in most patients.
+
