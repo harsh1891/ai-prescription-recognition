@@ -3,7 +3,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.session import get_db
 from app.models.user import User
-from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
+from app.routes.dependencies import require_roles, require_user
+from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserProfile
 from app.utils.security import create_access_token, hash_password, verify_password
 
 
@@ -34,3 +35,12 @@ async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)) -> To
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     return TokenResponse(access_token=create_access_token(user.email))
 
+
+@router.get("/me", response_model=UserProfile)
+async def me(user: User = Depends(require_user)) -> User:
+    return user
+
+
+@router.get("/admin-check")
+async def admin_check(user: User = Depends(require_roles("admin"))) -> dict[str, str]:
+    return {"status": "ok", "role": user.role}

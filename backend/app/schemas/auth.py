@@ -16,3 +16,11 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
 
+
+class UserProfile(BaseModel):
+    id: int
+    email: EmailStr
+    full_name: str
+    role: str
+
+    model_config = {"from_attributes": True}
