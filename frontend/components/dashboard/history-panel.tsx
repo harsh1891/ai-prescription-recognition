@@ -9,16 +9,16 @@ import { getPrescriptionHistory } from "@/services/api";
 import type { HistoryItem } from "@/types/prescription";
 import { compactDateTime } from "@/utils/format";
 
-export function HistoryPanel({ refreshKey }: { refreshKey: number }) {
+export function HistoryPanel({ refreshKey, token }: { refreshKey: number; token?: string | null }) {
   const [items, setItems] = useState<HistoryItem[]>([]);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
-      getPrescriptionHistory(search).then(setItems).catch(() => setItems([]));
+      getPrescriptionHistory(search, token).then(setItems).catch(() => setItems([]));
     }, 250);
     return () => window.clearTimeout(timeout);
-  }, [search, refreshKey]);
+  }, [search, refreshKey, token]);
 
   const resultLabel = useMemo(() => {
     if (!search) return "Latest processed prescriptions from storage.";

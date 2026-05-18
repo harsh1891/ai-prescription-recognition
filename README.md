@@ -6,6 +6,8 @@ AI-powered prescription extraction app with a Next.js dashboard, FastAPI backend
 
 ## Features
 
+- User sign up and sign in with JWT authentication.
+- User-scoped prescription uploads, history, analytics, and exports.
 - Upload handwritten prescription images or PDFs.
 - Preview files before processing.
 - Extract structured medicines, dosage, frequency, duration, doctor, date, and notes.
@@ -56,6 +58,8 @@ npm run dev
 ```
 
 Open `http://localhost:3000`.
+
+Create an account in the dashboard before uploading. Authenticated uploads are saved with that user, and the history panel shows that user’s records.
 
 ## Docker
 

@@ -96,18 +96,34 @@ async def analytics_summary(
 
 
 @router.get("/{prescription_id}", response_model=PrescriptionResult)
-async def get_prescription(prescription_id: int, db: AsyncSession = Depends(get_db)) -> PrescriptionResult:
+async def get_prescription(
+    prescription_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_current_user),
+) -> PrescriptionResult:
     row = await db.get(Prescription, prescription_id)
     if row is None:
         raise HTTPException(status_code=404, detail="Prescription not found")
+    if row.owner_id is not None and user is None:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if user and row.owner_id not in {None, user.id}:
+        raise HTTPException(status_code=403, detail="You do not have access to this prescription")
     return PrescriptionResult(**row.structured_data)
 
 
 @router.get("/{prescription_id}/export/json")
-async def export_json(prescription_id: int, db: AsyncSession = Depends(get_db)) -> Response:
+async def export_json(
+    prescription_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_current_user),
+) -> Response:
     row = await db.get(Prescription, prescription_id)
     if row is None:
         raise HTTPException(status_code=404, detail="Prescription not found")
+    if row.owner_id is not None and user is None:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if user and row.owner_id not in {None, user.id}:
+        raise HTTPException(status_code=403, detail="You do not have access to this prescription")
     return Response(
         json.dumps(row.structured_data, indent=2),
         media_type="application/json",
@@ -116,10 +132,18 @@ async def export_json(prescription_id: int, db: AsyncSession = Depends(get_db)) 
 
 
 @router.get("/{prescription_id}/export/pdf")
-async def export_pdf(prescription_id: int, db: AsyncSession = Depends(get_db)) -> Response:
+async def export_pdf(
+    prescription_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_current_user),
+) -> Response:
     row = await db.get(Prescription, prescription_id)
     if row is None:
         raise HTTPException(status_code=404, detail="Prescription not found")
+    if row.owner_id is not None and user is None:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if user and row.owner_id not in {None, user.id}:
+        raise HTTPException(status_code=403, detail="You do not have access to this prescription")
     return Response(
         service.build_pdf(row.structured_data),
         media_type="application/pdf",

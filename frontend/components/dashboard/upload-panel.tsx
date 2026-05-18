@@ -10,9 +10,11 @@ import type { PrescriptionResult } from "@/types/prescription";
 
 type UploadPanelProps = {
   onResult: (result: PrescriptionResult) => void;
+  token?: string | null;
+  disabled?: boolean;
 };
 
-export function UploadPanel({ onResult }: UploadPanelProps) {
+export function UploadPanel({ onResult, token, disabled = false }: UploadPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -27,7 +29,7 @@ export function UploadPanel({ onResult }: UploadPanelProps) {
     setIsProcessing(true);
     setError(null);
     try {
-      const result = await processPrescription(file, language);
+      const result = await processPrescription(file, language, token);
       onResult(result);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Processing failed");
@@ -68,7 +70,7 @@ export function UploadPanel({ onResult }: UploadPanelProps) {
 
         <button
           type="button"
-          onClick={() => inputRef.current?.click()}
+          onClick={() => !disabled && inputRef.current?.click()}
           onDragOver={(event) => {
             event.preventDefault();
             setIsDragging(true);
@@ -77,9 +79,10 @@ export function UploadPanel({ onResult }: UploadPanelProps) {
           onDrop={(event) => {
             event.preventDefault();
             setIsDragging(false);
-            pickFile(event.dataTransfer.files[0]);
+            if (!disabled) pickFile(event.dataTransfer.files[0]);
           }}
-          className={`flex min-h-56 w-full flex-col items-center justify-center gap-4 rounded-lg border border-dashed px-6 text-center transition ${
+          disabled={disabled}
+          className={`flex min-h-56 w-full flex-col items-center justify-center gap-4 rounded-lg border border-dashed px-6 text-center transition disabled:cursor-not-allowed disabled:opacity-60 ${
             isDragging ? "border-primary bg-primary/10" : "border-border bg-muted/30 hover:bg-muted/50"
           }`}
         >
@@ -114,9 +117,10 @@ export function UploadPanel({ onResult }: UploadPanelProps) {
           </div>
         ) : null}
 
+        {disabled ? <div className="rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground">Sign in to upload and save prescriptions to your account.</div> : null}
         {error ? <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive-foreground">{error}</div> : null}
 
-        <Button className="w-full" disabled={!file || isProcessing} onClick={submit}>
+        <Button className="w-full" disabled={!file || isProcessing || disabled} onClick={submit}>
           {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
           {isProcessing ? "Processing prescription" : "Extract prescription"}
         </Button>

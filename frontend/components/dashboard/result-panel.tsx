@@ -6,15 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { OcrHeatmap } from "@/components/dashboard/ocr-heatmap";
 import { Progress } from "@/components/ui/progress";
-import { exportUrl } from "@/services/api";
+import { downloadPrescription } from "@/services/api";
 import type { PrescriptionResult } from "@/types/prescription";
 import { percent } from "@/utils/format";
 
 type ResultPanelProps = {
   result: PrescriptionResult | null;
+  token?: string | null;
 };
 
-export function ResultPanel({ result }: ResultPanelProps) {
+export function ResultPanel({ result, token }: ResultPanelProps) {
   if (!result) {
     return (
       <Card className="min-h-[420px]">
@@ -104,11 +105,11 @@ export function ResultPanel({ result }: ResultPanelProps) {
         <div className="flex flex-wrap gap-2">
           {result.id ? (
             <>
-              <Button asChild variant="outline">
-                <a href={exportUrl(result.id, "json")}><Download className="h-4 w-4" /> JSON</a>
+              <Button variant="outline" onClick={() => downloadPrescription(result.id!, "json", token)}>
+                <Download className="h-4 w-4" /> JSON
               </Button>
-              <Button asChild variant="outline">
-                <a href={exportUrl(result.id, "pdf")}><Download className="h-4 w-4" /> PDF</a>
+              <Button variant="outline" onClick={() => downloadPrescription(result.id!, "pdf", token)}>
+                <Download className="h-4 w-4" /> PDF
               </Button>
             </>
           ) : null}

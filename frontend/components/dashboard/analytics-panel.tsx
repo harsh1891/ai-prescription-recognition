@@ -16,12 +16,12 @@ const emptySummary: AnalyticsSummary = {
   language_counts: {}
 };
 
-export function AnalyticsPanel({ refreshKey }: { refreshKey: number }) {
+export function AnalyticsPanel({ refreshKey, token }: { refreshKey: number; token?: string | null }) {
   const [summary, setSummary] = useState<AnalyticsSummary>(emptySummary);
 
   useEffect(() => {
-    getAnalyticsSummary().then(setSummary).catch(() => setSummary(emptySummary));
-  }, [refreshKey]);
+    getAnalyticsSummary(token).then(setSummary).catch(() => setSummary(emptySummary));
+  }, [refreshKey, token]);
 
   const languageText = Object.entries(summary.language_counts)
     .map(([language, count]) => `${language.toUpperCase()} ${count}`)
@@ -51,4 +51,3 @@ function Metric({ icon, label, value, detail }: { icon: React.ReactNode; label: 
     </Card>
   );
 }
-

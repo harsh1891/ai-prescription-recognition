@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { Activity, BrainCircuit, Database, Languages, ShieldCheck } from "lucide-react";
 import { AnalyticsPanel } from "@/components/dashboard/analytics-panel";
+import { AuthPanel } from "@/components/dashboard/auth-panel";
 import { HistoryPanel } from "@/components/dashboard/history-panel";
 import { ResultPanel } from "@/components/dashboard/result-panel";
 import { ThemeToggle } from "@/components/dashboard/theme-toggle";
 import { UploadPanel } from "@/components/dashboard/upload-panel";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { useAuth } from "@/hooks/use-auth";
 import type { PrescriptionResult } from "@/types/prescription";
 
 const capabilities = [
@@ -20,11 +22,18 @@ const capabilities = [
 ];
 
 export default function Home() {
+  const auth = useAuth();
   const [result, setResult] = useState<PrescriptionResult | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   function handleResult(nextResult: PrescriptionResult) {
     setResult(nextResult);
+    setRefreshKey((value) => value + 1);
+  }
+
+  function handleSignOut() {
+    auth.signOut();
+    setResult(null);
     setRefreshKey((value) => value + 1);
   }
 
@@ -59,12 +68,25 @@ export default function Home() {
 
       <section className="mx-auto grid max-w-7xl gap-5 px-4 py-6 sm:px-6 lg:grid-cols-[420px_1fr] lg:px-8">
         <div className="space-y-5">
-          <UploadPanel onResult={handleResult} />
-          <HistoryPanel refreshKey={refreshKey} />
+          <AuthPanel
+            user={auth.user}
+            isLoading={auth.isLoading}
+            onSignIn={async (payload) => {
+              await auth.signIn(payload);
+              setRefreshKey((value) => value + 1);
+            }}
+            onSignUp={async (payload) => {
+              await auth.signUp(payload);
+              setRefreshKey((value) => value + 1);
+            }}
+            onSignOut={handleSignOut}
+          />
+          <UploadPanel onResult={handleResult} token={auth.token} disabled={!auth.user} />
+          <HistoryPanel refreshKey={refreshKey} token={auth.token} />
         </div>
         <div className="space-y-5">
-          <AnalyticsPanel refreshKey={refreshKey} />
-          <ResultPanel result={result} />
+          <AnalyticsPanel refreshKey={refreshKey} token={auth.token} />
+          <ResultPanel result={result} token={auth.token} />
           <Card>
             <CardContent className="grid gap-4 p-5 text-sm text-muted-foreground md:grid-cols-3">
               <div>
