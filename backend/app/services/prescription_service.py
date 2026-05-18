@@ -23,7 +23,7 @@ class PrescriptionService:
         language_hint: str | None,
     ) -> PrescriptionResult:
         content = await file.read()
-        vision_result = await self.vision.extract(content, file.content_type or "application/octet-stream")
+        vision_result = await self.vision.extract(content, file.content_type or "application/octet-stream", language_hint)
         result = self.parser.parse(vision_result.payload, vision_result.extracted_text, language_hint)
 
         row = Prescription(
@@ -73,4 +73,3 @@ class PrescriptionService:
         pdf.showPage()
         pdf.save()
         return buffer.getvalue()
-

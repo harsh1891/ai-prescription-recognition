@@ -1,4 +1,4 @@
-import type { HistoryItem, PrescriptionResult } from "@/types/prescription";
+import type { AnalyticsSummary, HistoryItem, PrescriptionResult } from "@/types/prescription";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -16,10 +16,26 @@ export async function processPrescription(file: File, languageHint = "en"): Prom
   return response.json();
 }
 
-export async function getPrescriptionHistory(): Promise<HistoryItem[]> {
-  const response = await fetch(`${API_URL}/api/prescriptions`, { cache: "no-store" });
+export async function getPrescriptionHistory(search = ""): Promise<HistoryItem[]> {
+  const query = search ? `?search=${encodeURIComponent(search)}` : "";
+  const response = await fetch(`${API_URL}/api/prescriptions${query}`, { cache: "no-store" });
   if (!response.ok) {
     return [];
+  }
+  return response.json();
+}
+
+export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
+  const response = await fetch(`${API_URL}/api/prescriptions/analytics/summary`, { cache: "no-store" });
+  if (!response.ok) {
+    return {
+      total_prescriptions: 0,
+      total_medicines: 0,
+      average_confidence: 0,
+      signatures_detected: 0,
+      warning_count: 0,
+      language_counts: {}
+    };
   }
   return response.json();
 }
@@ -27,4 +43,3 @@ export async function getPrescriptionHistory(): Promise<HistoryItem[]> {
 export function exportUrl(id: number, type: "json" | "pdf") {
   return `${API_URL}/api/prescriptions/${id}/export/${type}`;
 }
-

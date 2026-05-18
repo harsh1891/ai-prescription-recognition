@@ -48,3 +48,11 @@ class PrescriptionListItem(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
+class AnalyticsSummary(BaseModel):
+    total_prescriptions: int
+    total_medicines: int
+    average_confidence: float
+    signatures_detected: int
+    warning_count: int
+    language_counts: dict[str, int]

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { FileText, ImageIcon, Loader2, UploadCloud, X } from "lucide-react";
+import { FileText, ImageIcon, Languages, Loader2, UploadCloud, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFilePreview } from "@/hooks/use-file-preview";
@@ -18,6 +18,7 @@ export function UploadPanel({ onResult }: UploadPanelProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [language, setLanguage] = useState("en");
 
   const previewUrl = useFilePreview(file);
 
@@ -26,7 +27,7 @@ export function UploadPanel({ onResult }: UploadPanelProps) {
     setIsProcessing(true);
     setError(null);
     try {
-      const result = await processPrescription(file);
+      const result = await processPrescription(file, language);
       onResult(result);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Processing failed");
@@ -45,9 +46,26 @@ export function UploadPanel({ onResult }: UploadPanelProps) {
     <Card className="overflow-hidden">
       <CardHeader>
         <CardTitle>Prescription Upload</CardTitle>
-        <CardDescription>PNG, JPG, WEBP, SVG, or PDF. Local mock mode works without API keys.</CardDescription>
+        <CardDescription>PNG, JPG, WEBP, SVG, or PDF. Gemini/OpenAI mode works when API keys are configured.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="grid gap-2">
+          <label className="flex items-center gap-2 text-sm font-medium" htmlFor="language">
+            <Languages className="h-4 w-4 text-primary" />
+            Prescription language
+          </label>
+          <select
+            id="language"
+            value={language}
+            onChange={(event) => setLanguage(event.target.value)}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="en">English</option>
+            <option value="hi">Hindi</option>
+            <option value="mr">Marathi</option>
+          </select>
+        </div>
+
         <button
           type="button"
           onClick={() => inputRef.current?.click()}

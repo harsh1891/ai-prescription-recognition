@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { Activity, BrainCircuit, Database, Languages, ShieldCheck } from "lucide-react";
+import { AnalyticsPanel } from "@/components/dashboard/analytics-panel";
 import { HistoryPanel } from "@/components/dashboard/history-panel";
 import { ResultPanel } from "@/components/dashboard/result-panel";
+import { ThemeToggle } from "@/components/dashboard/theme-toggle";
 import { UploadPanel } from "@/components/dashboard/upload-panel";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +21,12 @@ const capabilities = [
 
 export default function Home() {
   const [result, setResult] = useState<PrescriptionResult | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  function handleResult(nextResult: PrescriptionResult) {
+    setResult(nextResult);
+    setRefreshKey((value) => value + 1);
+  }
 
   return (
     <main className="min-h-screen bg-background">
@@ -26,7 +34,10 @@ export default function Home() {
         <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
-              <Badge variant="secondary" className="mb-3">Production-grade AI workflow</Badge>
+              <div className="mb-3 flex items-center gap-2">
+                <Badge variant="secondary">Production-grade AI workflow</Badge>
+                <ThemeToggle />
+              </div>
               <h1 className="max-w-4xl text-3xl font-semibold tracking-normal sm:text-4xl">
                 Handwritten Medical Prescription Recognition System
               </h1>
@@ -48,10 +59,11 @@ export default function Home() {
 
       <section className="mx-auto grid max-w-7xl gap-5 px-4 py-6 sm:px-6 lg:grid-cols-[420px_1fr] lg:px-8">
         <div className="space-y-5">
-          <UploadPanel onResult={setResult} />
-          <HistoryPanel />
+          <UploadPanel onResult={handleResult} />
+          <HistoryPanel refreshKey={refreshKey} />
         </div>
         <div className="space-y-5">
+          <AnalyticsPanel refreshKey={refreshKey} />
           <ResultPanel result={result} />
           <Card>
             <CardContent className="grid gap-4 p-5 text-sm text-muted-foreground md:grid-cols-3">
@@ -74,4 +86,3 @@ export default function Home() {
     </main>
   );
 }
-

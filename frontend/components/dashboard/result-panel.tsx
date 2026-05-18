@@ -4,6 +4,7 @@ import { Download, ShieldAlert, Signature } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { OcrHeatmap } from "@/components/dashboard/ocr-heatmap";
 import { Progress } from "@/components/ui/progress";
 import { exportUrl } from "@/services/api";
 import type { PrescriptionResult } from "@/types/prescription";
@@ -83,6 +84,8 @@ export function ResultPanel({ result }: ResultPanelProps) {
             </div>
           ))}
         </div>
+
+        <OcrHeatmap result={result} />
 
         {result.warnings.length ? (
           <div className="space-y-2">

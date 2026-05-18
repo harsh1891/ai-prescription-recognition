@@ -6,12 +6,19 @@ import httpx
 from app.config import get_settings
 
 
-PROMPT = (
-    "Extract all prescription text from this medical prescription. "
-    "Return JSON only with keys: extracted_text, doctor_name, date, language, "
-    "signature_detected, medicines. medicines must include raw_text, medicine, "
-    "dosage, frequency, duration, confidence."
-)
+LANGUAGE_NAMES = {"en": "English", "hi": "Hindi", "mr": "Marathi"}
+
+
+def build_prompt(language_hint: str | None = None) -> str:
+    language = LANGUAGE_NAMES.get(language_hint or "", "the detected language")
+    return (
+        "You are extracting a handwritten doctor prescription. "
+        f"The expected prescription language is {language}. "
+        "Read messy handwriting carefully, including common Indian prescription abbreviations. "
+        "Return JSON only with keys: extracted_text, doctor_name, date, language, "
+        "signature_detected, medicines. medicines must include raw_text, medicine, "
+        "dosage, frequency, duration, confidence. If unsure, keep the raw text and lower confidence."
+    )
 
 
 @dataclass
@@ -21,13 +28,13 @@ class VisionExtraction:
 
 
 class VisionClient:
-    async def extract(self, content: bytes, mime_type: str) -> VisionExtraction:
+    async def extract(self, content: bytes, mime_type: str, language_hint: str | None = None) -> VisionExtraction:
         settings = get_settings()
         provider = settings.vision_provider.lower()
         if provider == "gemini":
-            return await self._gemini(content, mime_type)
+            return await self._gemini(content, mime_type, language_hint)
         if provider == "openai":
-            return await self._openai(content, mime_type)
+            return await self._openai(content, mime_type, language_hint)
         return self._mock()
 
     def _mock(self) -> VisionExtraction:
@@ -45,7 +52,7 @@ class VisionClient:
         }
         return VisionExtraction(extracted_text=payload["extracted_text"], payload=payload)
 
-    async def _openai(self, content: bytes, mime_type: str) -> VisionExtraction:
+    async def _openai(self, content: bytes, mime_type: str, language_hint: str | None) -> VisionExtraction:
         settings = get_settings()
         if not settings.openai_api_key:
             raise RuntimeError("OPENAI_API_KEY is required when VISION_PROVIDER=openai")
@@ -58,7 +65,7 @@ class VisionClient:
                 {
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": PROMPT},
+                        {"type": "text", "text": build_prompt(language_hint)},
                         {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{image_data}"}},
                     ],
                 }
@@ -75,7 +82,7 @@ class VisionClient:
         payload = json.loads(text)
         return VisionExtraction(extracted_text=payload.get("extracted_text", ""), payload=payload)
 
-    async def _gemini(self, content: bytes, mime_type: str) -> VisionExtraction:
+    async def _gemini(self, content: bytes, mime_type: str, language_hint: str | None) -> VisionExtraction:
         settings = get_settings()
         if not settings.gemini_api_key:
             raise RuntimeError("GEMINI_API_KEY is required when VISION_PROVIDER=gemini")
@@ -89,7 +96,7 @@ class VisionClient:
             "contents": [
                 {
                     "parts": [
-                        {"text": PROMPT},
+                        {"text": build_prompt(language_hint)},
                         {"inline_data": {"mime_type": mime_type, "data": image_data}},
                     ]
                 }
@@ -102,4 +109,3 @@ class VisionClient:
         text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
         payload = json.loads(text)
         return VisionExtraction(extracted_text=payload.get("extracted_text", ""), payload=payload)
-

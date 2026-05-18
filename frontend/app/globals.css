@@ -54,6 +54,12 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  code,
+  pre,
+  .font-mono {
+    font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
   }
 }
-

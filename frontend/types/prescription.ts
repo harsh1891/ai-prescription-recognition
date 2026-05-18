@@ -43,3 +43,11 @@ export type HistoryItem = {
   structured_data: PrescriptionResult;
 };
 
+export type AnalyticsSummary = {
+  total_prescriptions: number;
+  total_medicines: number;
+  average_confidence: number;
+  signatures_detected: number;
+  warning_count: number;
+  language_counts: Record<string, number>;
+};
