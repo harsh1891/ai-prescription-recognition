@@ -23,7 +23,8 @@ export function AuthPanel({ user, isLoading, onSignIn, onSignUp, onSignOut }: Au
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function submit() {
+  async function submit(event?: React.FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
     setError(null);
     setIsSubmitting(true);
     try {
@@ -68,7 +69,8 @@ export function AuthPanel({ user, isLoading, onSignIn, onSignUp, onSignOut }: Au
         <CardTitle>{mode === "signup" ? "Create Account" : "Sign In"}</CardTitle>
         <CardDescription>Sign in before uploading to keep a private prescription history.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent>
+        <form className="space-y-3" onSubmit={submit}>
         <div className="grid grid-cols-2 gap-2">
           <Button variant={mode === "signin" ? "default" : "outline"} onClick={() => setMode("signin")}>
             <LogIn className="h-4 w-4" />
@@ -83,10 +85,11 @@ export function AuthPanel({ user, isLoading, onSignIn, onSignUp, onSignOut }: Au
         <Input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Email" type="email" />
         <Input value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Password" type="password" />
         {error ? <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">{error}</div> : null}
-        <Button className="w-full" disabled={isSubmitting || isLoading} onClick={submit}>
+        <Button className="w-full" disabled={isSubmitting || isLoading} type="submit">
           {mode === "signup" ? <UserPlus className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
           {isSubmitting ? "Please wait" : mode === "signup" ? "Create account" : "Sign in"}
         </Button>
+        </form>
       </CardContent>
     </Card>
   );

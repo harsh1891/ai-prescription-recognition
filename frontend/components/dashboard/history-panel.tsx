@@ -14,6 +14,10 @@ export function HistoryPanel({ refreshKey, token }: { refreshKey: number; token?
   const [search, setSearch] = useState("");
 
   useEffect(() => {
+    if (!token) {
+      setItems([]);
+      return;
+    }
     const timeout = window.setTimeout(() => {
       getPrescriptionHistory(search, token).then(setItems).catch(() => setItems([]));
     }, 250);
@@ -21,7 +25,8 @@ export function HistoryPanel({ refreshKey, token }: { refreshKey: number; token?
   }, [search, refreshKey, token]);
 
   const resultLabel = useMemo(() => {
-    if (!search) return "Latest processed prescriptions from storage.";
+    if (!token) return "Sign in to view your private prescription history.";
+    if (!search) return "Latest processed prescriptions from your account.";
     return `${items.length} result${items.length === 1 ? "" : "s"} for "${search}".`;
   }, [items.length, search]);
 
@@ -36,7 +41,9 @@ export function HistoryPanel({ refreshKey, token }: { refreshKey: number; token?
           <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search doctor, medicine, file..." className="pl-9" />
         </div>
-        {items.length ? items.map((item) => (
+        {!token ? (
+          <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">No account is signed in.</div>
+        ) : items.length ? items.map((item) => (
           <div key={item.id} className="flex items-center justify-between gap-3 rounded-lg border bg-background p-3">
             <div className="min-w-0">
               <div className="truncate text-sm font-medium">{item.original_filename}</div>

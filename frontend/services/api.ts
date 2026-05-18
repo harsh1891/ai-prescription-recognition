@@ -36,6 +36,9 @@ function authHeaders(token?: string | null): HeadersInit {
 
 async function readError(response: Response, fallback: string) {
   const detail = await response.json().catch(() => ({ detail: fallback }));
+  if (Array.isArray(detail.detail)) {
+    return detail.detail.map((item: { msg?: string }) => item.msg).filter(Boolean).join(", ") || fallback;
+  }
   return detail.detail ?? fallback;
 }
 

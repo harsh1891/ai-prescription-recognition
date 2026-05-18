@@ -20,6 +20,10 @@ export function AnalyticsPanel({ refreshKey, token }: { refreshKey: number; toke
   const [summary, setSummary] = useState<AnalyticsSummary>(emptySummary);
 
   useEffect(() => {
+    if (!token) {
+      setSummary(emptySummary);
+      return;
+    }
     getAnalyticsSummary(token).then(setSummary).catch(() => setSummary(emptySummary));
   }, [refreshKey, token]);
 

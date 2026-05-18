@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.session import get_db
 from app.models.prescription import Prescription
 from app.models.user import User
-from app.routes.dependencies import get_current_user
+from app.routes.dependencies import get_current_user, require_user
 from app.schemas.prescription import AnalyticsSummary, PrescriptionListItem, PrescriptionResult
 from app.services.prescription_service import PrescriptionService
 
@@ -20,7 +20,7 @@ async def process_prescription(
     file: UploadFile = File(...),
     language_hint: str | None = Query(default=None, pattern="^(en|hi|mr)$"),
     db: AsyncSession = Depends(get_db),
-    user: User | None = Depends(get_current_user),
+    user: User = Depends(require_user),
 ) -> PrescriptionResult:
     if file.content_type not in {"image/png", "image/jpeg", "image/webp", "application/pdf", "image/svg+xml"}:
         raise HTTPException(status_code=415, detail="Upload a PNG, JPG, WEBP, SVG, or PDF prescription")
@@ -42,11 +42,9 @@ async def list_gemini_models() -> list[dict]:
 async def list_prescriptions(
     search: str | None = None,
     db: AsyncSession = Depends(get_db),
-    user: User | None = Depends(get_current_user),
+    user: User = Depends(require_user),
 ) -> list[Prescription]:
-    query = select(Prescription).order_by(desc(Prescription.created_at)).limit(50)
-    if user:
-        query = query.where(Prescription.owner_id == user.id)
+    query = select(Prescription).where(Prescription.owner_id == user.id).order_by(desc(Prescription.created_at)).limit(50)
     if search:
         term = f"%{search}%"
         query = query.where(
@@ -62,11 +60,9 @@ async def list_prescriptions(
 @router.get("/analytics/summary", response_model=AnalyticsSummary)
 async def analytics_summary(
     db: AsyncSession = Depends(get_db),
-    user: User | None = Depends(get_current_user),
+    user: User = Depends(require_user),
 ) -> AnalyticsSummary:
-    query = select(Prescription)
-    if user:
-        query = query.where(Prescription.owner_id == user.id)
+    query = select(Prescription).where(Prescription.owner_id == user.id)
     result = await db.execute(query)
     rows = list(result.scalars().all())
 
