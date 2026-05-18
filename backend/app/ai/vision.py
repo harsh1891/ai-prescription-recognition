@@ -14,10 +14,12 @@ def build_prompt(language_hint: str | None = None) -> str:
     return (
         "You are extracting a handwritten doctor prescription. "
         f"The expected prescription language is {language}. "
-        "Read messy handwriting carefully, including common Indian prescription abbreviations. "
-        "Return JSON only with keys: extracted_text, doctor_name, date, language, "
-        "signature_detected, medicines. medicines must include raw_text, medicine, "
-        "dosage, frequency, duration, confidence. If unsure, keep the raw text and lower confidence."
+        "Read messy handwriting carefully. Never return example/demo data. "
+        "Extract exactly what is visible in the uploaded file. "
+        "Recognize prescription schedule abbreviations such as OD, QD, BD, BID, TID, QID, HS, SOS, PRN. "
+        "Return JSON only with keys: extracted_text, patient_name, doctor_name, date, language, "
+        "signature_detected, medicines. medicines must include raw_text, medicine, dosage, frequency, "
+        "duration, confidence. If a value is missing or uncertain, use null and lower confidence."
     )
 
 
@@ -84,7 +86,7 @@ class VisionClient:
                 headers={"Authorization": f"Bearer {settings.openai_api_key}"},
                 json=body,
             )
-            response.raise_for_status()
+            self._raise_for_status(response)
         text = response.json()["choices"][0]["message"]["content"]
         payload = json.loads(text)
         return VisionExtraction(extracted_text=payload.get("extracted_text", ""), payload=payload)
@@ -112,7 +114,14 @@ class VisionClient:
         }
         async with httpx.AsyncClient(timeout=60) as client:
             response = await client.post(url, json=body)
-            response.raise_for_status()
+            self._raise_for_status(response)
         text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
         payload = json.loads(text)
         return VisionExtraction(extracted_text=payload.get("extracted_text", ""), payload=payload)
+
+    def _raise_for_status(self, response: httpx.Response) -> None:
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            detail = response.text[:500]
+            raise RuntimeError(f"provider returned {response.status_code}: {detail}") from exc
