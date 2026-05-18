@@ -44,6 +44,8 @@ copy .env.example .env
 uvicorn app.main:app --reload --port 8000
 ```
 
+The default local `.env.example` uses SQLite so you can run the backend without installing PostgreSQL. Docker Compose and production deployment still use PostgreSQL.
+
 ### Frontend
 
 ```bash
@@ -90,4 +92,3 @@ git add .
 git commit -m "Build AI prescription recognition system"
 git push -u origin master
 ```
-
