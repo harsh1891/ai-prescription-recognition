@@ -31,10 +31,17 @@ class VisionClient:
     async def extract(self, content: bytes, mime_type: str, language_hint: str | None = None) -> VisionExtraction:
         settings = get_settings()
         provider = settings.vision_provider.lower()
-        if provider == "gemini":
-            return await self._gemini(content, mime_type, language_hint)
-        if provider == "openai":
-            return await self._openai(content, mime_type, language_hint)
+        try:
+            if provider == "gemini":
+                return await self._gemini(content, mime_type, language_hint)
+            if provider == "openai":
+                return await self._openai(content, mime_type, language_hint)
+        except Exception as exc:
+            if settings.environment == "development" and settings.ai_fallback_to_mock:
+                fallback = self._mock()
+                fallback.payload["provider_warning"] = f"{provider} failed, returned mock extraction for local development"
+                return fallback
+            raise RuntimeError(f"{provider} vision extraction failed: {exc}") from exc
         return self._mock()
 
     def _mock(self) -> VisionExtraction:

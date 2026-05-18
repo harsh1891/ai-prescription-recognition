@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o-mini"
     gemini_model: str = "gemini-1.5-flash"
+    ai_fallback_to_mock: bool = True
     medicine_dataset_path: str = "../datasets/medicines.csv"
     interaction_dataset_path: str = "../datasets/drug_interactions.csv"
     allowed_origins: str = "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001"
