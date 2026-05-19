@@ -1,145 +1,80 @@
 import base64
 import json
-from dataclasses import dataclass
-from typing import Any
+import asyncio
 import httpx
+from dataclasses import dataclass
+from typing import Any, Optional
 from app.config import get_settings
 
-
-LANGUAGE_NAMES = {"en": "English", "hi": "Hindi", "mr": "Marathi"}
-
-
-def build_prompt(language_hint: str | None = None) -> str:
-    language = LANGUAGE_NAMES.get(language_hint or "", "the detected language")
+def build_prompt(language_hint: Optional[str] = None) -> str:
+    """Strictly enforces raw text extraction for medical prescriptions."""
     return (
-        "You are extracting a handwritten doctor prescription. "
-        f"The expected prescription language is {language}. "
-        "Read messy handwriting carefully. Never return example/demo data. "
-        "Extract exactly what is visible in the uploaded file. "
-        "Recognize prescription schedule abbreviations such as OD, QD, BD, BID, TID, QID, HS, SOS, PRN. "
-        "Return JSON only with keys: extracted_text, patient_name, doctor_name, date, language, "
-        "signature_detected, medicines. medicines must include raw_text, medicine, dosage, frequency, "
-        "duration, confidence. If a value is missing or uncertain, use null and lower confidence."
+        "You are a medical scribe. Extract data from the prescription image as JSON.\n"
+        "1. MANDATORY: The 'medicine' field MUST contain the EXACT handwritten text from the image. "
+        "Do not interpret, correct, or infer spelling in this field.\n"
+        "2. REQUIRED FIELDS: patient_name, doctor_name, date, medicines (list of objects: medicine, dosage, frequency, duration).\n"
+        "3. Focus on accurate, verbatim extraction of handwritten notes."
     )
-
 
 @dataclass
 class VisionExtraction:
     extracted_text: str
     payload: dict[str, Any]
 
-
 class VisionClient:
-    async def list_gemini_models(self) -> list[dict[str, Any]]:
-        settings = get_settings()
-        if not settings.gemini_api_key:
-            raise RuntimeError("GEMINI_API_KEY is required to list Gemini models")
-        url = f"https://generativelanguage.googleapis.com/v1beta/models?key={settings.gemini_api_key}"
-        async with httpx.AsyncClient(timeout=30) as client:
-            response = await client.get(url)
-            self._raise_for_status(response)
-        models = response.json().get("models", [])
-        return [
-            {
-                "name": model.get("name"),
-                "display_name": model.get("displayName"),
-                "supported_generation_methods": model.get("supportedGenerationMethods", []),
-            }
-            for model in models
-        ]
-
-    async def extract(self, content: bytes, mime_type: str, language_hint: str | None = None) -> VisionExtraction:
-        settings = get_settings()
-        provider = settings.vision_provider.lower()
-        try:
-            if provider == "gemini":
-                return await self._gemini(content, mime_type, language_hint)
-            if provider == "openai":
-                return await self._openai(content, mime_type, language_hint)
-        except Exception as exc:
-            if settings.environment == "development" and settings.ai_fallback_to_mock:
-                fallback = self._mock()
-                fallback.payload["provider_warning"] = f"{provider} failed, returned mock extraction for local development"
-                return fallback
-            raise RuntimeError(f"{provider} vision extraction failed: {exc}") from exc
-        return self._mock()
-
-    def _mock(self) -> VisionExtraction:
-        payload = {
-            "extracted_text": "Dr. A. Sharma\nDate: 12/05/2026\nRx\nT PCM650 1-0-1 x5d\nPanto 40 1-0-0 x7d\nCet 10 0-0-1 x3d",
-            "doctor_name": "Dr. A. Sharma",
-            "date": "2026-05-12",
-            "language": "en",
-            "signature_detected": True,
-            "medicines": [
-                {"raw_text": "T PCM650 1-0-1 x5d", "confidence": 0.86},
-                {"raw_text": "Panto 40 1-0-0 x7d", "confidence": 0.82},
-                {"raw_text": "Cet 10 0-0-1 x3d", "confidence": 0.8},
-            ],
-        }
-        return VisionExtraction(extracted_text=payload["extracted_text"], payload=payload)
-
-    async def _openai(self, content: bytes, mime_type: str, language_hint: str | None) -> VisionExtraction:
-        settings = get_settings()
-        if not settings.openai_api_key:
-            raise RuntimeError("OPENAI_API_KEY is required when VISION_PROVIDER=openai")
-
-        image_data = base64.b64encode(content).decode("utf-8")
-        body = {
-            "model": settings.openai_model,
-            "response_format": {"type": "json_object"},
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": build_prompt(language_hint)},
-                        {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{image_data}"}},
-                    ],
-                }
-            ],
-        }
-        async with httpx.AsyncClient(timeout=60) as client:
-            response = await client.post(
-                "https://api.openai.com/v1/chat/completions",
-                headers={"Authorization": f"Bearer {settings.openai_api_key}"},
-                json=body,
-            )
-            self._raise_for_status(response)
-        text = response.json()["choices"][0]["message"]["content"]
-        payload = json.loads(text)
-        return VisionExtraction(extracted_text=payload.get("extracted_text", ""), payload=payload)
-
-    async def _gemini(self, content: bytes, mime_type: str, language_hint: str | None) -> VisionExtraction:
-        settings = get_settings()
-        if not settings.gemini_api_key:
-            raise RuntimeError("GEMINI_API_KEY is required when VISION_PROVIDER=gemini")
-
-        image_data = base64.b64encode(content).decode("utf-8")
-        url = (
-            f"https://generativelanguage.googleapis.com/v1beta/models/"
-            f"{settings.gemini_model}:generateContent?key={settings.gemini_api_key}"
-        )
-        body = {
-            "contents": [
-                {
-                    "parts": [
-                        {"text": build_prompt(language_hint)},
-                        {"inline_data": {"mime_type": mime_type, "data": image_data}},
-                    ]
-                }
-            ],
-            "generationConfig": {"response_mime_type": "application/json"},
-        }
-        async with httpx.AsyncClient(timeout=60) as client:
-            response = await client.post(url, json=body)
-            self._raise_for_status(response)
-        text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
-        payload = json.loads(text)
-        return VisionExtraction(extracted_text=payload.get("extracted_text", ""), payload=payload)
-
     def _raise_for_status(self, response: httpx.Response) -> None:
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as exc:
-            detail = response.text[:500]
-            raise RuntimeError(f"provider returned {response.status_code}: {detail}") from exc
+            raise RuntimeError(f"provider returned {response.status_code}: {response.text[:500]}") from exc
+
+    async def _gemini(self, content: bytes, mime_type: str, language_hint: Optional[str]) -> VisionExtraction:
+        settings = get_settings()
+        image_data = base64.b64encode(content).decode("utf-8")
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent?key={settings.gemini_api_key}"
+        
+        body = {
+            "contents": [{"parts": [{"text": build_prompt(language_hint)}, {"inline_data": {"mime_type": mime_type, "data": image_data}}]}],
+            "generationConfig": {"response_mime_type": "application/json"}
+        }
+
+        # RETRY LOGIC for 503 errors
+        for attempt in range(3):
+            try:
+                async with httpx.AsyncClient(timeout=60) as client:
+                    response = await client.post(url, json=body)
+                    if response.status_code == 503 and attempt < 2:
+                        await asyncio.sleep(2 * (attempt + 1))
+                        continue
+                    self._raise_for_status(response)
+                    text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
+                    payload = json.loads(text)
+                    return VisionExtraction(extracted_text=payload.get("extracted_text", ""), payload=payload)
+            except Exception as e:
+                if attempt == 2: raise e
+                await asyncio.sleep(2)
+
+    async def _openai(self, content: bytes, mime_type: str, language_hint: Optional[str]) -> VisionExtraction:
+        settings = get_settings()
+        image_data = base64.b64encode(content).decode("utf-8")
+        body = {
+            "model": settings.openai_model,
+            "response_format": {"type": "json_object"},
+            "messages": [{"role": "user", "content": [
+                {"type": "text", "text": build_prompt(language_hint)},
+                {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{image_data}"}}
+            ]}]
+        }
+        async with httpx.AsyncClient(timeout=60) as client:
+            response = await client.post("https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {settings.openai_api_key}"}, json=body)
+            self._raise_for_status(response)
+            payload = json.loads(response.json()["choices"][0]["message"]["content"])
+            return VisionExtraction(extracted_text=payload.get("extracted_text", ""), payload=payload)
+
+    async def extract(self, content: bytes, mime_type: str, language_hint: str | None = None) -> VisionExtraction:
+        settings = get_settings()
+        provider = settings.vision_provider.lower()
+        if provider == "gemini": return await self._gemini(content, mime_type, language_hint)
+        if provider == "openai": return await self._openai(content, mime_type, language_hint)
+        raise RuntimeError(f"Unknown provider: {provider}")

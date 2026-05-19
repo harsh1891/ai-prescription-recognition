@@ -55,22 +55,25 @@ export function ResultPanel({ result, token }: ResultPanelProps) {
         </div>
 
         <div className="space-y-3">
-          {result.medicines.map((medicine) => (
-            <div key={medicine.raw_text} className="rounded-lg border bg-background p-4">
+          {result.medicines.map((medicine, index) => (
+            <div key={index} className="rounded-lg border bg-background p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <div className="font-medium">{medicine.medicine}</div>
-                  <div className="mt-1 text-xs text-muted-foreground">{medicine.raw_text}</div>
+                  {/* The exact text from the prescription is now the primary header */}
+                  <div className="font-bold text-lg">{medicine.raw_text}</div>
                 </div>
                 <Badge variant="outline">{medicine.frequency ?? "No schedule"}</Badge>
               </div>
-              <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+              
+              <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3 text-muted-foreground">
                 <span>Dosage: {medicine.dosage ?? "Unknown"}</span>
                 <span>Duration: {medicine.duration ?? "Unknown"}</span>
                 <span>
                   Timing: {[medicine.morning && "Morning", medicine.afternoon && "Afternoon", medicine.night && "Night"].filter(Boolean).join(", ") || "Unknown"}
                 </span>
               </div>
+              
+              {/* Confidence bars remain for system transparency */}
               <div className="mt-4 grid gap-2 sm:grid-cols-4">
                 {Object.entries(medicine.confidence).map(([key, value]) => (
                   <div key={key}>
@@ -88,10 +91,11 @@ export function ResultPanel({ result, token }: ResultPanelProps) {
 
         <OcrHeatmap result={result} />
 
+        {/* Warnings Section */}
         {result.warnings.length ? (
           <div className="space-y-2">
-            {result.warnings.map((warning) => (
-              <div key={`${warning.drugs.join("-")}-${warning.message}`} className="flex gap-3 rounded-lg border border-amber-400/30 bg-amber-400/10 p-3 text-sm">
+            {result.warnings.map((warning, idx) => (
+              <div key={idx} className="flex gap-3 rounded-lg border border-amber-400/30 bg-amber-400/10 p-3 text-sm">
                 <ShieldAlert className="mt-0.5 h-4 w-4 text-amber-300" />
                 <div>
                   <div className="font-medium capitalize">{warning.severity} interaction</div>
