@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    deployed_frontend_origin: str = "https://frontend-eta-one-97.vercel.app"
     app_name: str = "Handwritten Medical Prescription Recognition System"
     environment: str = "development"
     database_url: str = "sqlite+aiosqlite:///./prescriptions.db"
@@ -33,7 +34,10 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins(self) -> list[str]:
-        return [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
+        origins = [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
+        if self.deployed_frontend_origin not in origins:
+            origins.append(self.deployed_frontend_origin)
+        return origins
 
     @field_validator("database_url", mode="before")
     @classmethod
