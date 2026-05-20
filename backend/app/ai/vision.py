@@ -72,9 +72,30 @@ class VisionClient:
             payload = json.loads(response.json()["choices"][0]["message"]["content"])
             return VisionExtraction(extracted_text=payload.get("extracted_text", ""), payload=payload)
 
+    async def _mock(self, language_hint: Optional[str]) -> VisionExtraction:
+        payload = {
+            "doctor_name": "Dr. Demo",
+            "date": "2026-05-20",
+            "language": language_hint or "en",
+            "medicines": [
+                {
+                    "raw_text": "Tab Paracetamol 500 mg BD x 3 days",
+                    "medicine": "Paracetamol",
+                    "dosage": "500 mg",
+                    "frequency": "BD",
+                    "duration": "3 days",
+                    "confidence": 0.95,
+                }
+            ],
+            "signature_detected": True,
+            "extracted_text": "Dr. Demo\nTab Paracetamol 500 mg BD x 3 days",
+        }
+        return VisionExtraction(extracted_text=payload["extracted_text"], payload=payload)
+
     async def extract(self, content: bytes, mime_type: str, language_hint: str | None = None) -> VisionExtraction:
         settings = get_settings()
         provider = settings.vision_provider.lower()
         if provider == "gemini": return await self._gemini(content, mime_type, language_hint)
         if provider == "openai": return await self._openai(content, mime_type, language_hint)
+        if provider == "mock": return await self._mock(language_hint)
         raise RuntimeError(f"Unknown provider: {provider}")

@@ -1,6 +1,13 @@
 fastapi
-uvicorn
+uvicorn[standard]
 sqlalchemy
-psycopg2-binary
+asyncpg
+aiosqlite
 pydantic-settings
 httpx
+python-multipart
+email-validator
+python-jose[cryptography]
+passlib[bcrypt]
+rapidfuzz
+reportlab
