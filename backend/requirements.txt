@@ -8,6 +8,7 @@ httpx
 python-multipart
 email-validator
 python-jose[cryptography]
+bcrypt==4.0.1
 passlib[bcrypt]
 rapidfuzz
 reportlab
