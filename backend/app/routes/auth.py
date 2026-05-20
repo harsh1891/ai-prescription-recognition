@@ -3,33 +3,50 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database.session import get_db
 from app.models.user import User
-from app.schemas.auth import RegisterRequest, TokenResponse
-from app.utils.security import hash_password, create_access_token
+from app.routes.dependencies import require_roles, require_user
+from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserProfile
+from app.utils.security import create_access_token, hash_password, verify_password
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
+
 @router.post("/register", status_code=status.HTTP_201_CREATED, response_model=TokenResponse)
 async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db)) -> TokenResponse:
-    # Check for existing email
     result = await db.execute(select(User).where(User.email == payload.email))
     if result.scalar_one_or_none():
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
 
-    # Create user
     user = User(
         email=payload.email,
         full_name=payload.full_name,
-        hashed_password=hash_password(payload.password)
+        hashed_password=hash_password(payload.password),
     )
-    
+
     try:
         db.add(user)
         await db.commit()
         await db.refresh(user)
-    except Exception as e:
+    except Exception:
         await db.rollback()
-        # This print will appear in Render Logs, revealing exactly why it crashed
-        print(f"CRASH ERROR: {str(e)}") 
         raise HTTPException(status_code=500, detail="Internal server error occurred")
-        
+
     return TokenResponse(access_token=create_access_token(payload.email))
+
+
+@router.post("/login", response_model=TokenResponse)
+async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)) -> TokenResponse:
+    result = await db.execute(select(User).where(User.email == payload.email))
+    user = result.scalar_one_or_none()
+    if user is None or not verify_password(payload.password, user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    return TokenResponse(access_token=create_access_token(user.email))
+
+
+@router.get("/me", response_model=UserProfile)
+async def me(user: User = Depends(require_user)) -> User:
+    return user
+
+
+@router.get("/admin-check")
+async def admin_check(user: User = Depends(require_roles("admin"))) -> dict[str, str]:
+    return {"status": "ok", "role": user.role}
