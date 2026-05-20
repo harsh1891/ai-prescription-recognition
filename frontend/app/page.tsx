@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Activity, BrainCircuit, Database, Languages, ShieldCheck } from "lucide-react";
+import { Activity, BrainCircuit, Database, Languages, ShieldCheck, Sparkles } from "lucide-react";
 import { AnalyticsPanel } from "@/components/dashboard/analytics-panel";
 import { AuthPanel } from "@/components/dashboard/auth-panel";
 import { HistoryPanel } from "@/components/dashboard/history-panel";
@@ -38,13 +38,16 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-background">
-      <header className="border-b bg-card/80">
+    <main className="app-shell min-h-screen bg-background">
+      <header className="border-b bg-card/80 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
               <div className="mb-3 flex items-center gap-2">
-                <Badge variant="secondary">Production-grade AI workflow</Badge>
+                <Badge variant="secondary" className="gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Production-grade AI workflow
+                </Badge>
                 <ThemeToggle />
               </div>
               <h1 className="max-w-4xl text-3xl font-semibold tracking-normal sm:text-4xl">
@@ -56,7 +59,7 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 md:w-auto">
               {capabilities.map(({ label, icon: Icon }) => (
-                <div key={label} className="flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-xs">
+                <div key={label} className="depth-chip flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-xs">
                   <Icon className="h-4 w-4 text-primary" />
                   {label}
                 </div>
@@ -82,7 +85,7 @@ export default function Home() {
             onSignOut={handleSignOut}
           />
           <UploadPanel onResult={handleResult} token={auth.token} disabled={!auth.user} />
-          <HistoryPanel refreshKey={refreshKey} token={auth.token} />
+          <HistoryPanel refreshKey={refreshKey} token={auth.token} selectedId={result?.id ?? null} onSelect={setResult} />
         </div>
         <div className="space-y-5">
           <AnalyticsPanel refreshKey={refreshKey} token={auth.token} />

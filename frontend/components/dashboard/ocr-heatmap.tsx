@@ -3,7 +3,11 @@
 import type { PrescriptionResult } from "@/types/prescription";
 
 export function OcrHeatmap({ result }: { result: PrescriptionResult }) {
-  const tokens = result.extracted_text.split(/(\s+)/);
+  const heatmapText = result.extracted_text.trim() || result.medicines
+    .map((medicine) => [medicine.raw_text, medicine.dosage, medicine.frequency, medicine.duration].filter(Boolean).join(" "))
+    .join("\n");
+  const tokens = heatmapText.split(/(\s+)/);
+  const isDerived = !result.extracted_text.trim();
 
   function scoreForToken(token: string) {
     const cleaned = token.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -24,9 +28,14 @@ export function OcrHeatmap({ result }: { result: PrescriptionResult }) {
   }
 
   return (
-    <div className="rounded-lg border bg-background p-4">
+    <div className="rounded-lg border bg-background p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="text-sm font-medium">OCR confidence heatmap</div>
+        <div>
+          <div className="text-sm font-medium">OCR confidence heatmap</div>
+          {isDerived ? (
+            <div className="mt-1 text-xs text-muted-foreground">Provider returned structured fields without raw OCR text, so this view is derived from extracted medicine rows.</div>
+          ) : null}
+        </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="h-2 w-8 rounded-full bg-destructive/60" />
           Low
@@ -34,7 +43,7 @@ export function OcrHeatmap({ result }: { result: PrescriptionResult }) {
           High
         </div>
       </div>
-      <div className="whitespace-pre-wrap rounded-md bg-muted/30 p-3 font-mono text-xs leading-7">
+      <div className="whitespace-pre-wrap rounded-md bg-muted/30 p-3 font-mono text-xs leading-7 shadow-inner">
         {tokens.map((token, index) => {
           const score = scoreForToken(token);
           if (score === null || /^\s+$/.test(token)) return token;

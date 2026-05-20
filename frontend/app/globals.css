@@ -63,3 +63,24 @@
     font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
   }
 }
+
+@layer components {
+  .app-shell {
+    background:
+      linear-gradient(hsl(var(--border) / 0.12) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.12) 1px, transparent 1px),
+      hsl(var(--background));
+    background-size: 32px 32px;
+  }
+
+  .depth-chip {
+    box-shadow: 0 10px 24px hsl(var(--foreground) / 0.08), inset 0 1px 0 hsl(var(--card-foreground) / 0.08);
+    transform: translateZ(0);
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+
+  .depth-chip:hover {
+    box-shadow: 0 16px 32px hsl(var(--foreground) / 0.12), inset 0 1px 0 hsl(var(--card-foreground) / 0.1);
+    transform: translateY(-1px);
+  }
+}
