@@ -17,7 +17,13 @@ class Settings(BaseSettings):
     ai_fallback_to_mock: bool = False
     medicine_dataset_path: str = "../datasets/medicines.csv"
     interaction_dataset_path: str = "../datasets/drug_interactions.csv"
-    allowed_origins: str = "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001"
+    allowed_origins: str = (
+        "http://localhost:3000,"
+        "http://localhost:3001,"
+        "http://127.0.0.1:3000,"
+        "http://127.0.0.1:3001,"
+        "https://frontend-eta-one-97.vercel.app"
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env", 
