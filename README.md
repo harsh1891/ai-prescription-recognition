@@ -140,7 +140,7 @@ Local Docker services:
 ### Backend
 
 ```env
-DATABASE_URL=postgresql+asyncpg://user:password@host:5432/database
+
 SECRET_KEY=replace-with-a-secure-random-secret
 VISION_PROVIDER=mock
 GEMINI_API_KEY=
