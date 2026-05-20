@@ -108,6 +108,9 @@ export default function Home() {
           </Card>
         </div>
       </section>
+      <footer className="mx-auto max-w-7xl px-4 pb-8 text-center text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground sm:px-6 lg:px-8">
+        Developed by HARSH AMBADE
+      </footer>
     </main>
   );
 }

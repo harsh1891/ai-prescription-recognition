@@ -59,7 +59,11 @@ class PrescriptionService:
         y -= 18
         pdf.setFont("Helvetica", 9)
         for item in data.get("medicines", []):
-            line = f"- {item.get('medicine')} | {item.get('dosage')} | {item.get('frequency')} | {item.get('duration')}"
+            medicine_name = item.get("raw_text") or item.get("medicine") or "Unknown medicine"
+            dosage = item.get("dosage") or "Unknown dosage"
+            frequency = item.get("frequency") or "Unknown frequency"
+            duration = item.get("duration") or "Unknown duration"
+            line = f"- {medicine_name} | {dosage} | {frequency} | {duration}"
             pdf.drawString(56, y, line[:115])
             y -= 16
         y -= 10
