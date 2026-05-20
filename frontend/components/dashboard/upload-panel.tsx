@@ -48,7 +48,7 @@ export function UploadPanel({ onResult, token, disabled = false }: UploadPanelPr
     <Card className="overflow-hidden">
       <CardHeader>
         <CardTitle>Prescription Upload</CardTitle>
-        <CardDescription>PNG, JPG, WEBP, SVG, or PDF. Gemini/OpenAI mode works when API keys are configured.</CardDescription>
+        <CardDescription>PNG, JPG, WEBP, or PDF. Gemini/OpenAI mode works when API keys are configured.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-2">
@@ -94,7 +94,7 @@ export function UploadPanel({ onResult, token, disabled = false }: UploadPanelPr
           ref={inputRef}
           className="hidden"
           type="file"
-          accept="image/png,image/jpeg,image/webp,image/svg+xml,application/pdf"
+          accept="image/png,image/jpeg,image/webp,application/pdf"
           onChange={(event) => pickFile(event.target.files?.[0])}
         />
 

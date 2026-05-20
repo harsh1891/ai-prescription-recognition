@@ -21,8 +21,8 @@ async def process_prescription(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_user),
 ) -> PrescriptionResult:
-    if file.content_type not in {"image/png", "image/jpeg", "image/webp", "application/pdf", "image/svg+xml"}:
-        raise HTTPException(status_code=415, detail="Upload a PNG, JPG, WEBP, SVG, or PDF prescription")
+    if file.content_type not in {"image/png", "image/jpeg", "image/webp", "application/pdf"}:
+        raise HTTPException(status_code=415, detail="Upload a PNG, JPG, WEBP, or PDF prescription")
     
     try:
         result = await service.process(file, db, user, language_hint)
